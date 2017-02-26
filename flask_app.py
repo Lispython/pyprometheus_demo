@@ -2,23 +2,22 @@
 # -*- coding: utf-8 -*-
 import os
 
-import prometheus_client
 from flask import request, Response, Flask
-from prometheus_client import Counter, Gauge, Summary, Histogram
-from prometheus_client.core import  CollectorRegistry
-from prometheus_client.multiprocess import MultiProcessCollector
 
 from string import ascii_letters
 from random import choice
+from pyprometheus.contrib.uwsgi_features import UWSGIStorage
+from pyprometheus.registry import BaseRegistry
+from pyprometheus.utils.exposition import registry_to_text
+from pyprometheus.metrics import BaseMetric, Gauge, Counter, Histogram, Summary
 
-REGISTRY = CollectorRegistry(auto_describe=False)
+storage = UWSGIStorage(0)
+registry = BaseRegistry(storage=storage)
 
-MultiProcessCollector(REGISTRY)
 
-
-requests_total = Counter("app:requests_total", "Total count of requests", ["method", "url_rule"], registry=REGISTRY)
-request_time_histogram = Histogram("app:request_time_histogram", "Request time", ["method", "url_rule"], registry=REGISTRY)
-request_time_summary = Histogram("app:request_time_summary", "Request time", ["method", "url_rule"], registry=REGISTRY)
+requests_total = Counter("app:requests_total", "Total count of requests", ["method", "url_rule"], registry=registry)
+request_time_histogram = Histogram("app:request_time_histogram", "Request time", ["method", "url_rule"], registry=registry)
+request_time_summary = Histogram("app:request_time_summary", "Request time", ["method", "url_rule"], registry=registry)
 
 
 
@@ -29,7 +28,7 @@ app.debug = True
 @app.route("/metrics")
 def metrics():
     text = "# Process in {0}\n".format(os.getpid())
-    return Response(text + prometheus_client.generate_latest(REGISTRY), mimetype="text/plain")
+    return Response(text + registry_to_text(registry), mimetype="text/plain")
 
 
 @app.route('/<path:path>')
@@ -40,8 +39,9 @@ def index(path='/'):
     rnd = ''.join([choice(ascii_letters) for x in xrange(10)])
 
     text = "# Process in {0} rnd={1}\n".format(os.getpid(), rnd)
-    with request_time_histogram.labels(method=request.method, url_rule=path).time(), request_time_summary.labels(method=request.method, url_rule=path).time():
-        return Response(text, mimetype="text/plain")
+    #with request_time_histogram.labels(method=request.method, url_rule=path).time(), request_time_summary.labels(method=request.method, url_rule=path).time():
+
+    return Response(text, mimetype="text/plain")
 
 application = app
 print("Debug app init")

@@ -1,4 +1,4 @@
-# Example project for testing prometheus_client for python
+# Example project for show pyprometheus for python features
 
 ## Starting application
 For start application simple run `make docker-start`
