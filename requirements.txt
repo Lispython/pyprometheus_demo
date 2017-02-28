@@ -1,3 +1,4 @@
 Flask==0.10.1
 uwsgi==2.0.14
--e git+https://github.com/Lispython/pyprometheus.git#egg=pyprometheus
+#-e git+https://github.com/Lispython/pyprometheus.git#egg=pyprometheus
+pyprometheus==0.0.4
